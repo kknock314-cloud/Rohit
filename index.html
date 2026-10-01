@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PitchStats Pro</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#070a10">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Firebase Compat SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="p-4 max-w-md mx-auto pb-20">
+
+    <!-- Header Section -->
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-bold tracking-wider text-green-500">PITCHSTATS PRO</h1>
+            <p id="user-status" class="text-xs text-gray-400 font-mono uppercase">CHECKING LOGIN...</p>
+        </div>
+        <button id="auth-btn" onclick="handleAuth()" class="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg text-sm font-semibold transition">
+            Login
+        </button>
+    </div>
+
+    <!-- Search & Filters Section -->
+    <div class="card-bg p-4 rounded-xl mb-4 space-y-3">
+        <!-- Search Bar -->
+        <div>
+            <label class="text-xs text-gray-400 font-semibold uppercase">🔍 SEARCH SCORECARD</label>
+            <input type="text" id="search-input" oninput="applyFilters()" placeholder="Search by venue, series or pitch..." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm mt-1 focus:outline-none focus:border-green-500 text-gray-200">
+        </div>
+
+        <div>
+            <label class="text-xs text-gray-400 font-semibold uppercase">📍 FILTER VENUE</label>
+            <select id="filter-venue" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm mt-1 focus:outline-none focus:border-green-500 text-gray-200">
+                <option value="all">All Venues</option>
+            </select>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+            <div>
+                <label class="text-xs text-gray-400 font-semibold uppercase">PITCH NO.</label>
+                <select id="filter-pitch" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm mt-1 focus:outline-none focus:border-green-500 text-gray-200">
+                    <option value="all">All Pitches</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-xs text-gray-400 font-semibold uppercase">FORMAT</label>
+                <select id="filter-format" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm mt-1 focus:outline-none focus:border-green-500 text-gray-200">
+                    <option value="all">All Formats</option>
+                    <option value="T20">T20</option>
+                    <option value="ODI">ODI</option>
+                    <option value="Test">Test</option>
+                </select>
+            </div>
+        </div>
+        <div class="flex justify-between items-center pt-2 text-xs text-gray-400">
+            <span>Filtered Matches: <strong id="total-matches" class="text-amber-400">0</strong></span>
+            <span class="text-emerald-400 font-mono">☁ Firestore Active</span>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-2 gap-3 mb-4">
+        <div class="card-bg p-4 rounded-xl text-center">
+            <p class="text-xs text-gray-400 uppercase font-semibold">AVG 1ST INNINGS</p>
+            <h2 id="avg-1st" class="text-3xl font-extrabold text-emerald-400 my-1">0</h2>
+            <p id="pitch-avg-sub" class="text-[10px] text-gray-500">Overall Average</p>
+        </div>
+        <div class="card-bg p-4 rounded-xl text-center">
+            <p class="text-xs text-gray-400 uppercase font-semibold">AVG 2ND INNINGS</p>
+            <h2 id="avg-2nd" class="text-3xl font-extrabold text-blue-400 my-1">0</h2>
+            <p class="text-[10px] text-gray-500">Chasing Average</p>
+        </div>
+    </div>
+
+    <!-- Win Rate Cards -->
+    <div class="card-bg p-4 rounded-xl mb-4 space-y-3">
+        <div class="flex justify-between text-xs font-semibold">
+            <span class="text-gray-400">1ST BAT WIN %</span>
+            <span id="win-1st-percent" class="text-blue-400">0%</span>
+        </div>
+        <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+            <div id="bar-1st" class="bg-blue-500 h-full w-0 transition-all duration-500"></div>
+        </div>
+
+        <div class="flex justify-between text-xs font-semibold pt-1">
+            <span class="text-gray-400">2ND BAT (CHASE) WIN %</span>
+            <span id="win-2nd-percent" class="text-amber-400">0%</span>
+        </div>
+        <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+            <div id="bar-2nd" class="bg-amber-500 h-full w-0 transition-all duration-500"></div>
+        </div>
+    </div>
+
+    <!-- Bowling Analysis Summary -->
+    <div class="grid grid-cols-2 gap-3 mb-4">
+        <div class="card-bg p-3 rounded-xl text-center">
+            <p class="text-[11px] text-gray-400 uppercase font-semibold">AVG PACERS WKT</p>
+            <h3 id="avg-pacers" class="text-xl font-bold text-orange-400 mt-1">0</h3>
+        </div>
+        <div class="card-bg p-3 rounded-xl text-center">
+            <p class="text-[11px] text-gray-400 uppercase font-semibold">AVG SPINNERS WKT</p>
+            <h3 id="avg-spinners" class="text-xl font-bold text-purple-400 mt-1">0</h3>
+        </div>
+    </div>
+
+    <!-- Action Button -->
+    <button onclick="openModal()" class="w-full btn-green font-bold py-3 rounded-xl mb-6 shadow-lg shadow-green-900/20 active:scale-95 transition">
+        + Add New Match Scorecard
+    </button>
+
+    <!-- Scorecards Feed -->
+    <div class="space-y-3">
+        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Saved Scorecards History</h3>
+        <div id="scorecard-list" class="space-y-2">
+            <!-- Dynamic Content -->
+        </div>
+    </div>
+
+    <!-- Add/Edit Modal Form -->
+    <div id="match-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="card-bg w-full max-w-md p-5 rounded-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                <h3 id="modal-title" class="font-bold text-green-500">Add Match Scorecard</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-white text-lg">&times;</button>
+            </div>
+            <input type="hidden" id="edit-doc-id">
+            
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label class="text-[10px] text-gray-400 font-semibold uppercase">League Type</label>
+                    <select id="m-league-type" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs mt-1 text-gray-200">
+                        <option value="Domestic">Domestic</option>
+                        <option value="International">International</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-[10px] text-gray-400 font-semibold uppercase">Format</label>
+                    <select id="m-format" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs mt-1 text-gray-200">
+                        <option value="T20">T20</option>
+                        <option value="ODI">ODI</option>
+                        <option value="Test">Test</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label class="text-[10px] text-gray-400 font-semibold uppercase">League / Series Name</label>
+                <input type="text" id="m-series" placeholder="e.g. IPL 2026, Bilateral Series" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs mt-1 text-gray-200">
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label class="text-[10px] text-gray-400 font-semibold uppercase">Venue / Stadium</label>
+                    <input type="text" id="m-venue" placeholder="e.g. Wankhede Stadium" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs mt-1 text-gray-200">
+                </div>
+                <div>
+                    <label class="text-[10px] text-gray-400 font-semibold uppercase">Pitch No.</label>
+                    <input type="text" id="m-pitch-no" placeholder="e.g. Pitch 4" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs mt-1 text-gray-200">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label class="text-[10px] text-gray-400 font-semibold uppercase">1st Innings Score</label>
+                    <input type="number" id="m-score1" placeholder="e.g. 185" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs mt-1 text-gray-200">
+                </div>
+                <div>
+                    <label class="text-[10px] text-gray-400 font-semibold uppercase">2nd Innings Score</label>
+                    <input type="number" id="m-score2" placeholder="e.g. 172" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs mt-1 text-gray-200">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label class="text-[10px] text-gray-400 font-semibold uppercase">Pacers Wickets Taken</label>
+                    <input type="number" id="m-pacers" placeholder="e.g. 8" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs mt-1 text-gray-200">
+                </div>
+                <div>
+                    <label class="text-[10px] text-gray-400 font-semibold uppercase">Spinners Wickets Taken</label>
+                    <input type="number" id="m-spinners" placeholder="e.g. 4" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs mt-1 text-gray-200">
+                </div>
+            </div>
+
+            <div>
+                <label class="text-[10px] text-gray-400 font-semibold uppercase">Match Winner / Batting Result</label>
+                <select id="m-winner" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs mt-1 text-gray-200">
+                    <option value="1st">1st Batting Won</option>
+                    <option value="2nd">2nd Batting (Chase) Won</option>
+                </select>
+            </div>
+
+            <button onclick="saveMatch()" class="w-full btn-green font-bold py-2.5 rounded-xl text-sm transition">Save Scorecard</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
