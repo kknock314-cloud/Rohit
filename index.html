@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PitchStats Pro</title>
+
+    <!-- PWA & Favicon -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0b0f19">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='90' fill='%230a101d' stroke='%2310b981' stroke-width='20'/><text x='50%' y='54%' dominant-baseline='middle' text-anchor='middle' fill='%2334d399' font-family='sans-serif' font-weight='900' font-size='230'>Ps</text></svg>">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        body { background-color: #070a10; color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; }
+        .card-bg { background: #0f1623; border: 1px solid #1e293b; }
+        .modal-bg { background: #0b1320; border: 1px solid #1e293b; }
+        .inner-box-bg { background: #070d17; border: 1px solid #1a2536; }
+        .ps-logo {
+            background: linear-gradient(135deg, #0a101d 0%, #020617 100%);
+            border: 2px solid #10b981;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+        }
+        select, input { background-color: #070d17 !important; border-color: #1a2536 !important; color: #e2e8f0 !important; }
+        select:focus, input:focus { border-color: #10b981 !important; outline: none; }
+    </style>
+</head>
+<body class="min-h-screen p-4 max-w-lg mx-auto pb-10">
+
+    <!-- Header Section -->
+    <header class="flex items-center justify-between mb-5">
+        <div class="flex items-center gap-2.5">
+            <div class="ps-logo w-10 h-10 rounded-xl flex items-center justify-center font-black text-emerald-400 text-lg tracking-tighter select-none">
+                Ps
+            </div>
+            <div>
+                <h1 class="text-base font-black text-emerald-400 tracking-wide uppercase leading-none">PITCHSTATS PRO</h1>
+                <p class="text-[10px] text-slate-400 font-semibold tracking-wider mt-0.5">PERMANENT STORAGE • STRICT LOG</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-1.5">
+            <button onclick="exportData()" title="Export JSON" class="p-2 bg-slate-800/80 hover:bg-slate-700 text-slate-300 rounded-lg text-sm border border-slate-700">📥</button>
+            <button onclick="importData()" title="Import JSON" class="p-2 bg-slate-800/80 hover:bg-slate-700 text-slate-300 rounded-lg text-sm border border-slate-700">📤</button>
+            <button onclick="toggleModal(true)" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold px-3 py-2 rounded-xl text-xs transition-all shadow-md shadow-emerald-500/10 active:scale-95 flex items-center gap-1">
+                <span>+</span> Add Match
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Filtering Controls Box -->
+    <div class="card-bg p-4 rounded-2xl space-y-3.5 mb-3.5">
+        
+        <!-- Stadium Select -->
+        <div>
+            <div class="flex justify-between items-center text-[11px] font-bold mb-1.5">
+                <span class="text-slate-400 flex items-center gap-1">📍 STADIUM SELECT</span>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="addOption('stadium')" class="text-emerald-400 hover:underline">+ Add</button>
+                    <button type="button" onclick="editOption('stadium')" class="text-amber-400 hover:underline">✏️ Edit</button>
+                </div>
+            </div>
+            <select id="stadiumSelect" onchange="filterData()" class="w-full text-xs rounded-xl p-2.5 border">
+                <option value="">All Stadiums</option>
+            </select>
+        </div>
+
+        <!-- Separate Dropdowns for Pitch No & Pitch Type -->
+        <div class="grid grid-cols-2 gap-3">
+            <!-- 1. Pitch Number Filter -->
+            <div>
+                <div class="flex justify-between items-center text-[11px] font-bold mb-1.5">
+                    <span class="text-slate-400">PITCH NO.</span>
+                    <div class="flex items-center gap-1.5">
+                        <button type="button" onclick="addOption('pitchNo')" class="text-emerald-400 hover:underline">+ Add</button>
+                        <button type="button" onclick="editOption('pitchNo')" class="text-amber-400 hover:underline">✏️ Edit</button>
+                    </div>
+                </div>
+                <select id="pitchNoSelect" onchange="filterData()" class="w-full text-xs rounded-xl p-2.5 border">
+                    <option value="">All Pitches</option>
+                </select>
+            </div>
+
+            <!-- 2. Pitch Type Filter -->
+            <div>
+                <div class="flex justify-between items-center text-[11px] font-bold mb-1.5">
+                    <span class="text-slate-400">PITCH TYPE</span>
+                    <div class="flex items-center gap-1.5">
+                        <button type="button" onclick="addOption('pitchType')" class="text-emerald-400 hover:underline">+ Add</button>
+                        <button type="button" onclick="editOption('pitchType')" class="text-amber-400 hover:underline">✏️ Edit</button>
+                    </div>
+                </div>
+                <select id="pitchTypeSelect" onchange="filterData()" class="w-full text-xs rounded-xl p-2.5 border">
+                    <option value="">All Types</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Search Input -->
+        <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500 text-xs">🔍</span>
+            <input type="text" id="searchInput" oninput="filterData()" placeholder="Search score, pitch, team, date..." class="w-full pl-8 p-2.5 text-xs rounded-xl border">
+        </div>
+
+        <!-- Bottom Stat Badge Row -->
+        <div class="flex justify-between items-center text-[11px] font-bold pt-1 border-t border-slate-800/80">
+            <span class="text-slate-400">Total Matches: <span id="totalMatchesCount" class="text-amber-400 font-extrabold">0</span></span>
+            <span class="text-emerald-400 flex items-center gap-1">🔒 Permanent Records</span>
+        </div>
+    </div>
+
+    <!-- Average Scores Block -->
+    <div class="grid grid-cols-2 gap-3 mb-3.5">
+        <div class="card-bg p-3.5 rounded-2xl text-center">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">AVG 1ST INNINGS</span>
+            <span id="avg1st" class="text-3xl font-black text-emerald-400 my-0.5 block">0</span>
+            <span class="text-[10px] text-slate-500 font-medium block">Pahili Paari Avg Score</span>
+        </div>
+        <div class="card-bg p-3.5 rounded-2xl text-center">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">AVG 2ND INNINGS</span>
+            <span id="avg2nd" class="text-3xl font-black text-blue-400 my-0.5 block">0</span>
+            <span class="text-[10px] text-slate-500 font-medium block">Dusri Paari Avg Score</span>
+        </div>
+    </div>
+
+    <!-- Win Rate Analysis Block -->
+    <div class="card-bg p-4 rounded-2xl space-y-3 mb-3.5">
+        <div class="flex justify-between items-center text-[11px] font-bold pb-2 border-b border-slate-800">
+            <span class="text-slate-300 uppercase tracking-wider">WIN RATE ANALYSIS</span>
+            <span class="text-slate-400"><span id="winMatchesCount">0</span> MATCHES</span>
+        </div>
+
+        <div class="space-y-2.5">
+            <div>
+                <div class="flex justify-between text-xs font-semibold mb-1">
+                    <span class="text-blue-400">1st Batting Win %</span>
+                    <span id="win1stVal" class="text-slate-300">0%</span>
+                </div>
+                <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden">
+                    <div id="win1stBar" class="bg-blue-500 h-full rounded-full transition-all duration-300" style="width: 0%;"></div>
+                </div>
+            </div>
+
+            <div>
+                <div class="flex justify-between text-xs font-semibold mb-1">
+                    <span class="text-amber-400">2nd Bat (Chase) Win %</span>
+                    <span id="win2ndVal" class="text-slate-300">0%</span>
+                </div>
+                <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden">
+                    <div id="win2ndBar" class="bg-amber-500 h-full rounded-full transition-all duration-300" style="width: 0%;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Saved History Section -->
+    <div class="card-bg p-4 rounded-2xl">
+        <div class="text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-3 pb-2 border-b border-slate-800">
+            SAVED SCORECARDS HISTORY
+        </div>
+        <div id="historyList" class="space-y-2.5">
+            <p class="text-center text-xs text-slate-500 py-4">No match scorecards saved yet.</p>
+        </div>
+    </div>
+
+    <!-- POPUP MODAL -->
+    <div id="addMatchModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden">
+        <div class="modal-bg w-full max-w-md rounded-2xl p-4 space-y-3.5 max-h-[92vh] overflow-y-auto shadow-2xl">
+            
+            <!-- Header -->
+            <div class="flex items-start justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 text-base">
+                        📋
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-100 leading-tight">Naya Match Scorecard Add Karein</h3>
+                        <p class="text-[10px] text-slate-400">Select stadium and pitch details</p>
+                    </div>
+                </div>
+                <button type="button" onclick="toggleModal(false)" class="text-slate-400 hover:text-slate-200 text-base font-bold">✕</button>
+            </div>
+
+            <!-- Form -->
+            <form id="matchForm" onsubmit="saveMatch(event)" class="space-y-3">
+                
+                <!-- Stadium Selection -->
+                <div>
+                    <div class="flex justify-between items-center text-[10px] font-medium text-slate-300 mb-1">
+                        <span>Stadium *</span>
+                        <button type="button" onclick="addOption('stadium')" class="text-emerald-400 text-[10px] font-semibold hover:underline">+ New</button>
+                    </div>
+                    <select id="modalStadium" required class="w-full text-xs rounded-xl p-2.5 border">
+                    </select>
+                </div>
+
+                <!-- 2 Separate Options: Pitch Number & Pitch Type -->
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div>
+                        <div class="flex justify-between items-center text-[10px] font-medium text-slate-300 mb-1">
+                            <span>Pitch Number *</span>
+                            <button type="button" onclick="addOption('pitchNo')" class="text-emerald-400 text-[10px] font-semibold hover:underline">+ New</button>
+                        </div>
+                        <select id="modalPitchNo" required class="w-full text-xs rounded-xl p-2.5 border">
+                        </select>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-center text-[10px] font-medium text-slate-300 mb-1">
+                            <span>Pitch Type *</span>
+                            <button type="button" onclick="addOption('pitchType')" class="text-emerald-400 text-[10px] font-semibold hover:underline">+ New</button>
+                        </div>
+                        <select id="modalPitchType" required class="w-full text-xs rounded-xl p-2.5 border">
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Teams Row -->
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div>
+                        <label class="block text-[10px] font-medium text-slate-300 mb-1">Team 1 (1st Batting)</label>
+                        <input type="text" id="modalTeam1" placeholder="e.g. India" class="w-full p-2.5 text-xs rounded-xl border">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-medium text-slate-300 mb-1">Team 2 (2nd Batting)</label>
+                        <input type="text" id="modalTeam2" placeholder="e.g. Australia" class="w-full p-2.5 text-xs rounded-xl border">
+                    </div>
+                </div>
+
+                <!-- 1ST INNINGS SCORECARD -->
+                <div class="inner-box-bg p-3 rounded-xl space-y-1.5">
+                    <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider block">1ST INNINGS SCORECARD</span>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="block text-[9px] text-slate-400 mb-0.5">Runs *</label>
+                            <input type="number" id="modalRuns1" required placeholder="e.g. 185" class="w-full p-2 text-xs rounded-lg border">
+                        </div>
+                        <div>
+                            <label class="block text-[9px] text-slate-400 mb-0.5">Wickets</label>
+                            <input type="number" id="modalWickets1" placeholder="e.g. 6" class="w-full p-2 text-xs rounded-lg border">
+                        </div>
+                        <div>
+                            <label class="block text-[9px] text-slate-400 mb-0.5">Overs</label>
+                            <input type="text" id="modalOvers1" placeholder="e.g. 20.0" class="w-full p-2 text-xs rounded-lg border">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2ND INNINGS SCORECARD -->
+                <div class="inner-box-bg p-3 rounded-xl space-y-1.5">
+                    <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider block">2ND INNINGS SCORECARD</span>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="block text-[9px] text-slate-400 mb-0.5">Runs *</label>
+                            <input type="number" id="modalRuns2" required placeholder="e.g. 172" class="w-full p-2 text-xs rounded-lg border">
+                        </div>
+                        <div>
+                            <label class="block text-[9px] text-slate-400 mb-0.5">Wickets</label>
+                            <input type="number" id="modalWickets2" placeholder="e.g. 9" class="w-full p-2 text-xs rounded-lg border">
+                        </div>
+                        <div>
+                            <label class="block text-[9px] text-slate-400 mb-0.5">Overs</label>
+                            <input type="text" id="modalOvers2" placeholder="e.g. 20.0" class="w-full p-2 text-xs rounded-lg border">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Match Winner Select -->
+                <div>
+                    <label class="block text-[10px] font-medium text-slate-300 mb-1">Match Winner *</label>
+                    <select id="modalWinner" class="w-full text-xs rounded-xl p-2.5 border">
+                        <option value="1">1st Batting Team Won (Defended)</option>
+                        <option value="2">2nd Batting Team Won (Chased)</option>
+                    </select>
+                </div>
+
+                <!-- Save Button -->
+                <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold py-3 rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-emerald-500/20 active:scale-[0.98] transition-all">
+                    SAVE MATCH PERMANENTLY
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        let matches = JSON.parse(localStorage.getItem('pitchstats_matches')) || [];
+        let options = JSON.parse(localStorage.getItem('pitchstats_options')) || {
+            stadium: ['M. Chinnaswamy Stadium', 'Eden Gardens', 'Wankhede Stadium'],
+            pitchNo: ['Pitch 1', 'Pitch 2', 'Pitch 3', 'Pitch 4'],
+            pitchType: ['Red Clay', 'Black Soil', 'Green Grass', 'Hard Pitch']
+        };
+
+        function saveOptions() {
+            localStorage.setItem('pitchstats_options', JSON.stringify(options));
+        }
+
+        function populateDropdowns(selectedValues = {}) {
+            // Main filters dropdowns
+            ['stadium', 'pitchNo', 'pitchType'].forEach(key => {
+                const select = document.getElementById(key + 'Select');
+                const currVal = selectedValues[key] !== undefined ? selectedValues[key] : select.value;
+                select.innerHTML = `<option value="">All ${key === 'stadium' ? 'Stadiums' : key === 'pitchNo' ? 'Pitches' : 'Types'}</option>`;
+                options[key].forEach(opt => {
+                    select.innerHTML += `<option value="${opt}">${opt}</option>`;
+                });
+                select.value = currVal;
+            });
+
+            // Modal dropdowns
+            ['Stadium', 'PitchNo', 'PitchType'].forEach(key => {
+                const optKey = key.charAt(0).toLowerCase() + key.slice(1);
+                const modalSelect = document.getElementById('modal' + key);
+                if (modalSelect) {
+                    const currVal = selectedValues[optKey] !== undefined ? selectedValues[optKey] : modalSelect.value;
+                    modalSelect.innerHTML = '';
+                    options[optKey].forEach(item => {
+                        modalSelect.innerHTML += `<option value="${item}">${item}</option>`;
+                    });
+                    if(currVal && options[optKey].includes(currVal)) {
+                        modalSelect.value = currVal;
+                    }
+                }
+            });
+        }
+
+        function addOption(key) {
+            let labelName = key === 'stadium' ? 'Stadium' : key === 'pitchNo' ? 'Pitch No' : 'Pitch Type';
+            let val = prompt(`Add New ${labelName}:`);
+            if (val && val.trim() !== '') {
+                val = val.trim();
+                if (!options[key].includes(val)) {
+                    options[key].push(val);
+                    saveOptions();
+                    
+                    // Auto select the new option
+                    let selObj = {};
+                    selObj[key] = val;
+                    populateDropdowns(selObj);
+                    filterData();
+                }
+            }
+        }
+
+        function editOption(key) {
+            let labelName = key === 'stadium' ? 'Stadium' : key === 'pitchNo' ? 'Pitch No' : 'Pitch Type';
+            let currentSelect = document.getElementById(key + 'Select');
+            let selectedVal = currentSelect.value;
+
+            if (!selectedVal) {
+                alert(`Pehle dropdown se wo ${labelName} select kijiye jise aap edit/rename karna chahte hain.`);
+                return;
+            }
+
+            let newVal = prompt(`Rename ${labelName}:`, selectedVal);
+            if (newVal !== null) {
+                newVal = newVal.trim();
+                if (newVal === '') {
+                    if (confirm(`Kya aap "${selectedVal}" ko delete karna chahte hain?`)) {
+                        options[key] = options[key].filter(item => item !== selectedVal);
+                        saveOptions();
+                        populateDropdowns(
