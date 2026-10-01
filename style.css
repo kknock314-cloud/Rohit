@@ -1,0 +1,16 @@
+body {
+    background-color: #070a10;
+    color: #e2e8f0;
+    font-family: system-ui, -apple-system, sans-serif;
+}
+.card-bg {
+    background-color: #0f172a;
+    border: 1px solid #1e293b;
+}
+.btn-green {
+    background-color: #059669;
+    color: white;
+}
+.btn-green:hover {
+    background-color: #10b981;
+}
