@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PitchStats Pro</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#070a10">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='90' fill='%230a101d' stroke='%2310b981' stroke-width='20'/><text x='50%' y='54%' dominant-baseline='middle' text-anchor='middle' fill='%2334d399' font-family='sans-serif' font-weight='900' font-size='230'>Ps</text></svg>">
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="brand">
+                <div class="logo">Ps</div>
+                <div>
+                    <h1 class="title">PITCHSTATS PRO</h1>
+                    <p class="subtitle">PERMANENT STORAGE • STRICT LOG</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button type="button" onclick="exportData()" title="Export JSON" class="btn-icon">📥</button>
+                <button type="button" onclick="importData()" title="Import JSON" class="btn-icon">📤</button>
+                <button type="button" onclick="toggleModal(true)" class="btn-primary">+ Add Match</button>
+            </div>
+        </header>
+
+        <!-- Main Filters Box -->
+        <div class="card space-y">
+            <!-- Stadium Select -->
+            <div class="form-group">
+                <div class="label-row">
+                    <span class="label">📍 STADIUM SELECT</span>
+                    <div class="actions">
+                        <button type="button" onclick="addOption('stadium')" class="text-green">+ Add</button>
+                        <button type="button" onclick="editOption('stadium')" class="text-amber">✏️ Edit</button>
+                    </div>
+                </div>
+                <select id="stadiumSelect" onchange="filterData()" class="input">
+                    <option value="">All Stadiums</option>
+                </select>
+            </div>
+
+            <!-- Pitch No & Type -->
+            <div class="grid-2">
+                <div class="form-group">
+                    <div class="label-row">
+                        <span class="label">PITCH NO.</span>
+                        <div class="actions">
+                            <button type="button" onclick="addOption('pitchNo')" class="text-green">+ Add</button>
+                            <button type="button" onclick="editOption('pitchNo')" class="text-amber">✏️ Edit</button>
+                        </div>
+                    </div>
+                    <select id="pitchNoSelect" onchange="filterData()" class="input">
+                        <option value="">All Pitches</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <div class="label-row">
+                        <span class="label">PITCH TYPE</span>
+                        <div class="actions">
+                            <button type="button" onclick="addOption('pitchType')" class="text-green">+ Add</button>
+                            <button type="button" onclick="editOption('pitchType')" class="text-amber">✏️ Edit</button>
+                        </div>
+                    </div>
+                    <select id="pitchTypeSelect" onchange="filterData()" class="input">
+                        <option value="">All Types</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Search -->
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="searchInput" oninput="filterData()" placeholder="Search score, pitch, team, date..." class="input search-input">
+            </div>
+
+            <!-- Total Badge -->
+            <div class="footer-badge">
+                <span>Total Matches: <strong id="totalMatchesCount" class="text-amber">0</strong></span>
+                <span class="text-green">🔒 Permanent Records</span>
+            </div>
+        </div>
+
+        <!-- Averages -->
+        <div class="grid-2">
+            <div class="card text-center">
+                <span class="stat-label">AVG 1ST INNINGS</span>
+                <span id="avg1st" class="stat-value text-green">0</span>
+                <span class="stat-sub">Pahili Paari Avg Score</span>
+            </div>
+            <div class="card text-center">
+                <span class="stat-label">AVG 2ND INNINGS</span>
+                <span id="avg2nd" class="stat-value text-blue">0</span>
+                <span class="stat-sub">Dusri Paari Avg Score</span>
+            </div>
+        </div>
+
+        <!-- Win Rate -->
+        <div class="card space-y">
+            <div class="card-header">
+                <span>WIN RATE ANALYSIS</span>
+                <span><strong id="winMatchesCount">0</strong> MATCHES</span>
+            </div>
+
+            <div class="progress-section">
+                <div class="progress-info">
+                    <span class="text-blue">1st Batting Win %</span>
+                    <span id="win1stVal">0%</span>
+                </div>
+                <div class="progress-bg"><div id="win1stBar" class="progress-fill bg-blue"></div></div>
+            </div>
+
+            <div class="progress-section">
+                <div class="progress-info">
+                    <span class="text-amber">2nd Bat (Chase) Win %</span>
+                    <span id="win2ndVal">0%</span>
+                </div>
+                <div class="progress-bg"><div id="win2ndBar" class="progress-fill bg-amber"></div></div>
+            </div>
+        </div>
+
+        <!-- Saved History -->
+        <div class="card">
+            <div class="card-header">SAVED SCORECARDS HISTORY</div>
+            <div id="historyList" class="history-list">
+                <p class="empty-msg">No match scorecards saved yet.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL POPUP -->
+    <div id="addMatchModal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div>
+                    <h3>Naya Match Scorecard Add Karein</h3>
+                    <p>Select stadium and pitch details</p>
+                </div>
+                <button type="button" onclick="toggleModal(false)" class="close-btn">✕</button>
+            </div>
+
+            <form onsubmit="saveMatch(event)" class="modal-body space-y">
+                <div>
+                    <div class="label-row">
+                        <span>Stadium *</span>
+                        <button type="button" onclick="addOption('stadium')" class="text-green">+ New</button>
+                    </div>
+                    <select id="modalStadium" required class="input"></select>
+                </div>
+
+                <div class="grid-2">
+                    <div>
+                        <div class="label-row">
+                            <span>Pitch Number *</span>
+                            <button type="button" onclick="addOption('pitchNo')" class="text-green">+ New</button>
+                        </div>
+                        <select id="modalPitchNo" required class="input"></select>
+                    </div>
+                    <div>
+                        <div class="label-row">
+                            <span>Pitch Type *</span>
+                            <button type="button" onclick="addOption('pitchType')" class="text-green">+ New</button>
+                        </div>
+                        <select id="modalPitchType" required class="input"></select>
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <div>
+                        <label class="label">Team 1 (1st Batting)</label>
+                        <input type="text" id="modalTeam1" placeholder="e.g. India" class="input">
+                    </div>
+                    <div>
+                        <label class="label">Team 2 (2nd Batting)</label>
+                        <input type="text" id="modalTeam2" placeholder="e.g. Australia" class="input">
+                    </div>
+                </div>
+
+                <!-- 1ST INNINGS -->
+                <div class="inner-box">
+                    <span class="inner-title">1ST INNINGS SCORECARD</span>
+                    <div class="grid-3">
+                        <div>
+                            <label class="label">Runs *</label>
+                            <input type="number" id="modalRuns1" required placeholder="185" class="input">
+                        </div>
+                        <div>
+                            <label class="label">Wickets</label>
+                            <input type="number" id="modalWickets1" placeholder="6" class="input">
+                        </div>
+                        <div>
+                            <label class="label">Overs</label>
+                            <input type="text" id="modalOvers1" placeholder="20.0" class="input">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2ND INNINGS -->
+                <div class="inner-box">
+                    <span class="inner-title">2ND INNINGS SCORECARD</span>
+                    <div class="grid-3">
+                        <div>
+                            <label class="label">Runs *</label>
+                            <input type="number" id="modalRuns2" required placeholder="172" class="input">
+                        </div>
+                        <div>
+                            <label class="label">Wickets</label>
+                            <input type="number" id="modalWickets2" placeholder="9" class="input">
+                        </div>
+                        <div>
+                            <label class="label">Overs</label>
+                            <input type="text" id="modalOvers2" placeholder="20.0" class="input">
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="label">Match Winner *</label>
+                    <select id="modalWinner" class="input">
+                        <option value="1">1st Batting Team Won (Defended)</option>
+                        <option value="2">2nd Batting Team Won (Chased)</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn-submit">SAVE MATCH PERMANENTLY</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
