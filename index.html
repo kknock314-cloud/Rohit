@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PitchStats Pro</title>
+
+    <!-- PWA & Photoshop Favicon -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0b0f19">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='90' fill='%230a101d' stroke='%2310b981' stroke-width='20'/><text x='50%' y='54%' dominant-baseline='middle' text-anchor='middle' fill='%2334d399' font-family='sans-serif' font-weight='900' font-size='230'>Ps</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='90' fill='%230a101d' stroke='%2310b981' stroke-width='20'/><text x='50%' y='54%' dominant-baseline='middle' text-anchor='middle' fill='%2334d399' font-family='sans-serif' font-weight='900' font-size='230'>Ps</text></svg>">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        body { background-color: #080c14; color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; }
+        .card-bg { background: #101726; border: 1px solid #1e293b; }
+        .ps-logo {
+            background: linear-gradient(135deg, #0a101d 0%, #020617 100%);
+            border: 2px solid #10b981;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+        }
+        input, select { background-color: #0b111e !important; border-color: #1e293b !important; }
+        input:focus, select:focus { border-color: #10b981 !important; outline: none; }
+    </style>
+</head>
+<body class="min-h-screen p-4 max-w-lg mx-auto">
+
+    <!-- Top Navigation Header -->
+    <header class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-3">
+            <div class="ps-logo w-10 h-10 rounded-xl flex items-center justify-center font-black text-emerald-400 text-lg tracking-tighter select-none">
+                Ps
+            </div>
+            <div>
+                <h1 class="text-lg font-bold text-emerald-400 tracking-wide uppercase leading-tight">PITCHSTATS PRO</h1>
+                <p class="text-xs text-slate-400">Match Analytics & Full Control</p>
+            </div>
+        </div>
+        <button onclick="openAddMatchModal()" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold px-4 py-2 rounded-xl text-sm transition-all shadow-lg shadow-emerald-500/20 active:scale-95 flex items-center gap-1">
+            <span>+</span> Add Match
+        </button>
+    </header>
+
+    <!-- Controls & Selection Card -->
+    <div class="card-bg p-4 rounded-2xl space-y-4 mb-4">
+        <!-- Stadium Controls -->
+        <div>
+            <div class="flex justify-between items-center text-xs mb-1.5">
+                <span class="font-bold text-slate-400 tracking-wider">STADIUM</span>
+                <div class="flex gap-3">
+                    <button onclick="addOption('stadium')" class="text-emerald-400 font-semibold hover:underline">+Add</button>
+                    <button onclick="editOption('stadium')" class="text-amber-400 font-semibold hover:underline">✏️Edit</button>
+                </div>
+            </div>
+            <select id="stadiumSelect" onchange="filterData()" class="w-full text-sm text-slate-200 rounded-xl p-2.5 border">
+                <option value="">All Stadiums</option>
+            </select>
+        </div>
+
+        <!-- Pitch No & Pitch Type Row -->
+        <div class="grid grid-cols-2 gap-3">
+            <div>
+                <div class="flex justify-between items-center text-xs mb-1.5">
+                    <span class="font-bold text-slate-400 tracking-wider">PITCH NO.</span>
+                    <div class="flex gap-2">
+                        <button onclick="addOption('pitchNo')" class="text-emerald-400 font-semibold hover:underline">+Add</button>
+                        <button onclick="editOption('pitchNo')" class="text-amber-400 font-semibold hover:underline">✏️Edit</button>
+                    </div>
+                </div>
+                <select id="pitchNoSelect" onchange="filterData()" class="w-full text-sm text-slate-200 rounded-xl p-2.5 border">
+                    <option value="">All Pitches</option>
+                </select>
+            </div>
+
+            <div>
+                <div class="flex justify-between items-center text-xs mb-1.5">
+                    <span class="font-bold text-slate-400 tracking-wider">PITCH TYPE</span>
+                    <div class="flex gap-2">
+                        <button onclick="addOption('pitchType')" class="text-emerald-400 font-semibold hover:underline">+Add</button>
+                        <button onclick="editOption('pitchType')" class="text-amber-400 font-semibold hover:underline">✏️Edit</button>
+                    </div>
+                </div>
+                <select id="pitchTypeSelect" onchange="filterData()" class="w-full text-sm text-slate-200 rounded-xl p-2.5 border">
+                    <option value="">All Types</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500 text-sm">🔍</span>
+            <input type="text" id="searchInput" oninput="filterData()" placeholder="Search score, pitch, date..." class="w-full pl-9 p-2.5 text-sm text-slate-200 rounded-xl border">
+        </div>
+    </div>
+
+    <!-- Analytics Averages Display Cards -->
+    <div class="grid grid-cols-2 gap-3 mb-4">
+        <div class="card-bg p-4 rounded-2xl text-center">
+            <span class="text-[11px] font-bold text-slate-400 tracking-wider block mb-1">AVG 1ST INNINGS</span>
+            <span id="avg1st" class="text-3xl font-black text-emerald-400">0</span>
+        </div>
+        <div class="card-bg p-4 rounded-2xl text-center">
+            <span class="text-[11px] font-bold text-slate-400 tracking-wider block mb-1">AVG 2ND INNINGS</span>
+            <span id="avg2nd" class="text-3xl font-black text-blue-400">0</span>
+        </div>
+    </div>
+
+    <!-- Scorecards List Section -->
+    <div class="card-bg p-4 rounded-2xl">
+        <div class="flex justify-between items-center text-xs mb-3 pb-2 border-b border-slate-800">
+            <span class="font-bold text-slate-300 tracking-wider uppercase">MATCH SCORECARDS</span>
+            <span class="text-slate-400 font-medium">Total: <span id="totalCount" class="text-emerald-400 font-bold">0</span></span>
+        </div>
+        
+        <div id="matchList" class="space-y-3">
+            <p class="text-center text-xs text-slate-500 py-6">No match scorecards saved yet.</p>
+        </div>
+    </div>
+
+    <!-- JavaScript Data Logic -->
+    <script>
+        let matches = JSON.parse(localStorage.getItem('pitchstats_matches')) || [];
+        let options = JSON.parse(localStorage.getItem('pitchstats_options')) || {
+            stadium: ['Eden Gardens', 'Wankhede', 'M. Chinnaswamy'],
+            pitchNo: ['Pitch 1', 'Pitch 2', 'Pitch 3'],
+            pitchType: ['Red Clay', 'Black Soil', 'Green Grass']
+        };
+
+        function saveOptions() {
+            localStorage.setItem('pitchstats_options', JSON.stringify(options));
+            populateDropdowns();
+        }
+
+        function populateDropdowns() {
+            ['stadium', 'pitchNo', 'pitchType'].forEach(key => {
+                const select = document.getElementById(key + 'Select');
+                const currentVal = select.value;
+                select.innerHTML = `<option value="">All ${key === 'stadium' ? 'Stadiums' : key === 'pitchNo' ? 'Pitches' : 'Types'}</option>`;
+                options[key].forEach(opt => {
+                    select.innerHTML += `<option value="${opt}">${opt}</option>`;
+                });
+                select.value = currentVal;
+            });
+        }
+
+        function addOption(key) {
+            let val = prompt(`Add new ${key}:`);
+            if (val && !options[key].includes(val)) {
+                options[key].push(val);
+                saveOptions();
+            }
+        }
+
+        function editOption(key) {
+            let current = document.getElementById(key + 'Select').value;
+            if (!current) return alert('Select an option from dropdown first to edit.');
+            let val = prompt(`Edit ${key}:`, current);
+            if (val) {
+                let idx = options[key].indexOf(current);
+                if (idx !== -1) options[key][idx] = val;
+                saveOptions();
+            }
+        }
+
+        function openAddMatchModal() {
+            let s1 = prompt("1st Innings Score:");
+            if (s1 === null) return;
+            let s2 = prompt("2nd Innings Score:");
+            if (s2 === null) return;
+
+            let stadium = document.getElementById('stadiumSelect').value || options.stadium[0] || 'Default Stadium';
+            let pitchNo = document.getElementById('pitchNoSelect').value || options.pitchNo[0] || 'Pitch 1';
+            let pitchType = document.getElementById('pitchTypeSelect').value || options.pitchType[0] || 'Standard';
+
+            let newMatch = {
+                id: Date.now(),
+                stadium,
+                pitchNo,
+                pitchType,
+                inn1: parseInt(s1) || 0,
+                inn2: parseInt(s2) || 0,
+                date: new Date().toLocaleDateString()
+            };
+
+            matches.push(newMatch);
+            localStorage.setItem('pitchstats_matches', JSON.stringify(matches));
+            filterData();
+        }
+
+        function filterData() {
+            let stadium = document.getElementById('stadiumSelect').value;
+            let pitchNo = document.getElementById('pitchNoSelect').value;
+            let pitchType = document.getElementById('pitchTypeSelect').value;
+            let query = document.getElementById('searchInput').value.toLowerCase();
+
+            let filtered = matches.filter(m => {
+                let matchStadium = !stadium || m.stadium === stadium;
+                let matchPitchNo = !pitchNo || m.pitchNo === pitchNo;
+                let matchPitchType = !pitchType || m.pitchType === pitchType;
+                let matchQuery = !query || m.stadium.toLowerCase().includes(query) || m.pitchType.toLowerCase().includes(query) || m.date.includes(query) || m.inn1.toString().includes(query) || m.inn2.toString().includes(query);
+                return matchStadium && matchPitchNo && matchPitchType && matchQuery;
+            });
+
+            renderList(filtered);
+        }
+
+        function renderList(list) {
+            document.getElementById('totalCount').innerText = list.length;
+
+            if (list.length === 0) {
+                document.getElementById('avg1st').innerText = '0';
+                document.getElementById('avg2nd').innerText = '0';
+                document.getElementById('matchList').innerHTML = `<p class="text-center text-xs text-slate-500 py-6">No match scorecards saved yet.</p>`;
+                return;
+            }
+
+            let sum1 = 0, sum2 = 0;
+            let html = '';
+
+            list.forEach(m => {
+                sum1 += m.inn1;
+                sum2 += m.inn2;
+                html += `
+                    <div class="bg-slate-900/90 border border-slate-800 p-3 rounded-xl flex justify-between items-center text-xs">
+                        <div>
+                            <p class="font-bold text-slate-200">${m.stadium} (${m.pitchNo})</p>
+                            <p class="text-slate-400 text-[10px]">${m.pitchType} • ${m.date}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-emerald-400 font-bold">1st: ${m.inn1}</p>
+                            <p class="text-blue-400 font-bold">2nd: ${m.inn2}</p>
+                        </div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('avg1st').innerText = Math.round(sum1 / list.length);
+            document.getElementById('avg2nd').innerText = Math.round(sum2 / list.length);
+            document.getElementById('matchList').innerHTML = html;
+        }
+
+        // Service Worker Reg
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js').catch(e => console.log(e));
+        }
+
+        // Init App
+        populateDropdowns();
+        filterData();
+    </script>
+</body>
+  </html>
+  
